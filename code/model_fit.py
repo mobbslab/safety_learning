@@ -16,12 +16,15 @@ if __name__ == "__main__":
     model_type = 'choice_only'
 
     # Set up output directory
-    out_dir = 'data/model_fitting/model{0}/{1}'.format(runID, model_type)
+    out_dir = 'data/model_fitting/study2/model{0}/{1}'.format(runID, model_type)
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
     # Get data
     df = pd.read_csv('data/all_confidence_estimate_combo_df.txt', sep='\t')
+
+    if df['trial_nr'].min() != 0:
+        raise ValueError('Trial numbers should start from zero')
 
     # Extract data fpr Stam
     n_subs = len(df['sub'].unique())
@@ -54,7 +57,12 @@ if __name__ == "__main__":
             points_received[n, task_type_id, trial_numbers] = sub_task_type_df['points'].values[:n_trials]
             start_state[n, task_type_id, trial_numbers] = sub_task_type_df['state1'].values[:n_trials]
             stakes[n, task_type_id, trial_numbers] = sub_task_type_df['stake'].values[:n_trials]
-            estimate[n, task_type_id, trial_numbers] = sub_task_type_df['estimate'].str.extract('([0-9])')[0].values[:n_trials].astype(float)
+
+            if sub_task_type_df['estimate'].dtype != 'float64':
+                estimate[n, task_type_id, trial_numbers] = sub_task_type_df['estimate'].str.extract('([0-9])')[0].values[:n_trials].astype(float)
+            else:
+                estimate[n, task_type_id, trial_numbers] = sub_task_type_df['estimate'][:n_trials]
+            
             rt[n, task_type_id, trial_numbers] = sub_task_type_df['rt1'].values[:n_trials]
             
             if np.min(sub_task_type_df['rt1'].values[:n_trials]) < min_rt:
